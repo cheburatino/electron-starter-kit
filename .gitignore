@@ -1,0 +1,22 @@
+# Env
+.env
+
+# Idea
+.idea
+
+# Cursor
+.cursor
+
+# Python
+__pycache__/
+venv
+*.py[cod]
+*.egg-info/
+
+# Vue
+front/node_modules/
+front/dist/
+
+# Back
+back/venv/
+back/.env

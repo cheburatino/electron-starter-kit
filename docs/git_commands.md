@@ -1,0 +1,4 @@
+- Удаление локальной ветки: git branch -d <branch_name>
+- Удаление ветки с удалённого репозитория: git push origin --delete <branch_name>
+- Посмотреть текущие ветки и их связь с удалённой веткой: git branch -vv
+- Запушить с созданием ветки в удалённом репозитории: git push -u origin arch/create_repositories

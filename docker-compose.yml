@@ -1,0 +1,98 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: assistant-back
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./back:/back
+      - ./.env:/back/.env
+    depends_on:
+      main_db:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=postgresql://${MAIN_DB_USER}:${MAIN_DB_PASSWORD}@main_db:5432/${MAIN_DB_NAME}
+      - APP_ENV=dev
+      - PYTHONUNBUFFERED=1
+      - MAIN_DB_HOST=main_db
+      - MAIN_DB_PORT=5432
+      - MAIN_DB_NAME=${MAIN_DB_NAME}
+      - MAIN_DB_USER=${MAIN_DB_USER}
+      - MAIN_DB_PASSWORD=${MAIN_DB_PASSWORD}
+      - MAIN_DB_POOL_MIN_SIZE=1
+      - MAIN_DB_POOL_MAX_SIZE=10
+
+  main_db:
+    build:
+      context: ./main_db
+      dockerfile: Dockerfile
+    container_name: assistant-main-db
+    environment:
+      POSTGRES_USER: ${MAIN_DB_USER}
+      POSTGRES_PASSWORD: ${MAIN_DB_PASSWORD}
+      POSTGRES_DB: ${MAIN_DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - main_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  analytic_db:
+    build:
+      context: ./analytic_db
+      dockerfile: Dockerfile
+    container_name: assistant-analytic-db
+    environment:
+      POSTGRES_USER: ${ANALYTIC_DB_USER}
+      POSTGRES_PASSWORD: ${ANALYTIC_DB_PASSWORD}
+      POSTGRES_DB: ${ANALYTIC_DB_NAME}
+    ports:
+      - "5434:5432"
+    volumes:
+      - analytic_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # db_migrations:
+  #   build:
+  #     context: ./main_db/migrations
+  #     dockerfile: Dockerfile
+  #   container_name: assistant-db_migrations
+  #   depends_on:
+  #     main_db:
+  #       condition: service_healthy
+  #   restart: "no"
+
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    container_name: assistant-front
+    working_dir: /front
+    volumes:
+      - ./front:/front
+    ports:
+      - "8080:8080"
+      
+  # flutter:
+  #   build:
+  #     context: ./flutter
+  #     dockerfile: Dockerfile
+  #   container_name: assistant-flutter
+  #   ports:
+  #     - "7000:7000"
+  #   volumes:
+  #     - ./flutter:/app
+
+volumes:
+  main_postgres_data:
+  analytic_postgres_data:

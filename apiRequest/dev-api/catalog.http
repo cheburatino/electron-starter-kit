@@ -1,0 +1,25 @@
+### Создание пользователя
+POST localhost:8000/dev/catalog/reason/create
+Content-Type: application/json
+
+{
+  "title": "Первый",
+  "code": "THIRDD"
+}
+
+### Обновление
+PATCH localhost:8000/dev/catalog/reason/update/7
+Content-Type: application/json
+
+{
+  "title": "Второй",
+  "code": "NEXT"
+}
+
+### Получение id по code
+POST localhost:8000/dev/catalog/reason/get-id-by-code
+Content-Type: application/json
+
+{
+  "code": "NEXTN"
+}

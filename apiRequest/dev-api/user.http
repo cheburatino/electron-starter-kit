@@ -1,0 +1,7 @@
+### Создание пользователя
+POST localhost:8000/dev/user/test-create
+Content-Type: application/json
+
+{
+  "auth_email": "sss@kk.ri"
+}

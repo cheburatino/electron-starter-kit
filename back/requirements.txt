@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+toml
+asyncpg
+pydantic-settings
+python-telegram-bot
+openai
+cryptography>=39.0.0
+fastapi_mail
+PyJWT==2.8.0

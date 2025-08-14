@@ -1,0 +1,9 @@
+### Создание пользователя
+POST localhost:8000/auth/start-registration
+Content-Type: application/json
+
+{
+  "auth_email": "test@example1.com",
+  "first_name": "George",
+  "last_name": "Best"
+}
