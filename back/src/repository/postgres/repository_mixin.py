@@ -1,4 +1,5 @@
 from datetime import datetime
+from contextlib import asynccontextmanager
 
 from infra.tool.postgres_client.postgres_client import PostgresClient
 from .table_crud import TableCrud
@@ -64,15 +65,22 @@ class RepositoryMixin:
                 value = data[field_name]
                 setattr(self, field_name, value)
 
+    @classmethod
+    @asynccontextmanager
+    async def _ensure_transaction(cls, tx, db_client: PostgresClient):
+        if tx:
+            yield tx
+        else:
+            async with db_client.transaction_manager.transaction() as new_tx:
+                yield new_tx
 
     @classmethod
-    async def create(cls, data: dict, db_client: PostgresClient = None, repository: Repository = None):
+    async def create(cls, data: dict, tx=None, db_client: PostgresClient = None, repository: Repository = None):
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            result = await actual_repository.create(data)
-
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            result = await actual_repository.create(data, tx=transaction)
             instance = cls._instantiate(str(result["id"]), actual_db_client, actual_repository)
             instance.id = result["id"]
             instance._populate_from_data(result)
@@ -82,14 +90,15 @@ class RepositoryMixin:
     async def get_by_id(
         cls,
         id_value: int,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
     ):
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            data = await actual_repository.get_by_id(id_value)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            data = await actual_repository.get_by_id(id_value, tx=transaction)
             if data:
                 instance = cls._instantiate(str(data["id"]), actual_db_client, actual_repository)
                 instance._populate_from_data(data)
@@ -101,6 +110,7 @@ class RepositoryMixin:
         cls,
         filters: list = None,
         include_deleted: bool = False,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
         **kwargs,
@@ -108,8 +118,8 @@ class RepositoryMixin:
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            result = await actual_repository.get_list(filters, include_deleted, **kwargs)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            result = await actual_repository.get_list(filters, include_deleted, tx=transaction, **kwargs)
             instances = []
             for data in result:
                 instance = cls._instantiate(str(data["id"]), actual_db_client, actual_repository)
@@ -122,14 +132,15 @@ class RepositoryMixin:
         cls,
         id_value: int,
         data: dict,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
     ):
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            result = await actual_repository.update(id_value, data)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            result = await actual_repository.update(id_value, data, tx=transaction)
             if result:
                 instance = cls._instantiate(str(result["id"]), actual_db_client, actual_repository)
                 instance._populate_from_data(result)
@@ -140,14 +151,15 @@ class RepositoryMixin:
     async def soft_delete_by_id(
         cls,
         id_value: int,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
     ):
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            result = await actual_repository.soft_delete(id_value)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            result = await actual_repository.soft_delete(id_value, tx=transaction)
             if result:
                 instance = cls._instantiate(str(result["id"]), actual_db_client, actual_repository)
                 instance._populate_from_data(result)
@@ -158,14 +170,15 @@ class RepositoryMixin:
     async def hard_delete_by_id(
         cls,
         id_value: int,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
     ):
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            result = await actual_repository.hard_delete(id_value)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            result = await actual_repository.hard_delete(id_value, tx=transaction)
             if result:
                 instance = cls._instantiate(str(result["id"]), actual_db_client, actual_repository)
                 instance._populate_from_data(result)
@@ -176,45 +189,47 @@ class RepositoryMixin:
     async def get_id_by_code(
         cls,
         code: str,
+        tx=None,
         db_client: PostgresClient = None,
         repository: Repository = None,
     ) -> int | None:
         actual_db_client = db_client or cls._get_db_client()
         actual_repository = repository or cls._get_repository()
 
-        async with actual_db_client.transaction_manager.transaction():
-            return await actual_repository.get_id_by_code(code)
+        async with cls._ensure_transaction(tx, actual_db_client) as transaction:
+            return await actual_repository.get_id_by_code(code, tx=transaction)
 
 
-    async def refresh(self):
+    async def refresh(self, tx=None):
         if not self.id:
             raise ValueError("Cannot refresh element without ID")
 
-        async with self.db_client.transaction_manager.transaction():
-            data = await self.repository.get_by_id(self.id)
+        async with self.__class__._ensure_transaction(tx, self.db_client) as transaction:
+            data = await self.repository.get_by_id(self.id, tx=transaction)
             if data:
                 self._populate_from_data(data)
             return data
 
-    async def update(self, **data):
+    async def update(self, tx=None, **data):
         if not self.id:
             raise ValueError("Cannot update element without ID")
 
-        async with self.db_client.transaction_manager.transaction():
-            result = await self.repository.update(self.id, data)
+        async with self.__class__._ensure_transaction(tx, self.db_client) as transaction:
+            result = await self.repository.update(self.id, data, tx=transaction)
             if result:
                 self._populate_from_data(result)
             return result
 
-    async def delete(self):
+    async def delete(self, tx=None):
         if not self.id:
             raise ValueError("Cannot delete element without ID")
 
-        async with self.db_client.transaction_manager.transaction():
-            return await self.repository.soft_delete(self.id)
+        async with self.__class__._ensure_transaction(tx, self.db_client) as transaction:
+            return await self.repository.soft_delete(self.id, tx=transaction)
 
-    async def hard_delete(self):
+    async def hard_delete(self, tx=None):
         if not self.id:
             raise ValueError("Cannot delete element without ID")
-        async with self.db_client.transaction_manager.transaction():
-            return await self.repository.hard_delete(self.id)
+            
+        async with self.__class__._ensure_transaction(tx, self.db_client) as transaction:
+            return await self.repository.hard_delete(self.id, tx=transaction)

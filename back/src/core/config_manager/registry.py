@@ -1,7 +1,8 @@
 from .configs.main_db import get_main_db_config
 from .configs.main_tg_bot import get_main_tg_bot_config
 from .configs.main_email import get_main_email_config
-from .configs.jwt_client import get_jwt_client_config
+from .configs.user_auth_jwt_encoder import get_user_auth_jwt_encoder_config
+from .configs.user_token_manager import get_user_token_manager_config
 
 
 class Registry:
@@ -10,7 +11,8 @@ class Registry:
             'main_db': get_main_db_config,
             'main_tg_bot': get_main_tg_bot_config,
             'main_email': get_main_email_config,
-            'jwt_client': get_jwt_client_config,
+            'user_auth_jwt_encoder': get_user_auth_jwt_encoder_config,
+            'user_token_manager': get_user_token_manager_config,
         }
     
     def get_config(self, key: str):

@@ -1,6 +1,6 @@
 import asyncpg
 from infra.adapter.abc.postgres_client.connector import Connector as AbstractConnector
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 
 
 class Connector(AbstractConnector):

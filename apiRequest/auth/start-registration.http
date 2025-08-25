@@ -1,9 +1,19 @@
-### Создание пользователя
-POST localhost:8000/auth/start-registration
+### Начало регистрации
+POST localhost:8000/auth/registration-confirm-code-start
 Content-Type: application/json
 
 {
-  "auth_email": "test@example1.com",
-  "first_name": "George",
-  "last_name": "Best"
+  "auth_email": "pollu0707@yandex.ru",
+  "first_name": "Илья",
+  "last_name": "Стильный",
+  "middle_name": "Михалыч"
+}
+
+### Верификация
+POST localhost:8000/auth/registration-confirm-code-finish
+Content-Type: application/json
+
+{
+  "token": "1a906272-8366-4afc-8214-193bedfa41e6",
+  "confirm_code": "213709"
 }

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 from .connector import Connector
 from .executor import Executor
 from .transaction_manager import TransactionManager

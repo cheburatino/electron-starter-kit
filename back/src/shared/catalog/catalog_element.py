@@ -30,8 +30,8 @@ class CatalogElement(StateMixin, RepositoryMixin):
         cls.__init__ = enhanced_init
 
     @classmethod
-    async def get_id_by_code(cls, code: str, db_client=None, repository=None) -> int:
-        result = await super().get_id_by_code(code, db_client, repository)
+    async def get_id_by_code(cls, code: str, tx=None, db_client=None, repository=None) -> int:
+        result = await super().get_id_by_code(code, tx=tx, db_client=db_client, repository=repository)
         if result is None:
             raise ValueError(f"Элемент каталога с code='{code}' не найден в {cls._db_table_name}")
         return result
@@ -43,19 +43,19 @@ class CatalogElement(StateMixin, RepositoryMixin):
             raise ValueError("code должен состоять из A-Z, 0-9 и _; без пробелов и дефисов; длина 1..50; верхний регистр")
 
     @classmethod
-    async def create(cls, data: dict, db_client=None, repository=None):
+    async def create(cls, data: dict, tx=None, db_client=None, repository=None):
         title = data.get("title")
         if not isinstance(title, str) or not title.strip():
             raise ValueError("title обязателен и не может быть пустым")
         code = data.get("code")
         cls.validate_code(code)
-        return await super().create(data, db_client, repository)
+        return await super().create(data, tx=tx, db_client=db_client, repository=repository)
 
-    async def update(self, **data):
+    async def update(self, tx=None, **data):
         if "title" in data:
             title = data.get("title")
             if not isinstance(title, str) or not title.strip():
                 raise ValueError("title обязателен и не может быть пустым")
         if "code" in data:
             self.validate_code(data.get("code"))
-        return await super().update(**data)
+        return await super().update(tx=tx, **data)

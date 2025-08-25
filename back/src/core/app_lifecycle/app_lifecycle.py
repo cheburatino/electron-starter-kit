@@ -6,8 +6,8 @@ from .components.load_env import load_env
 from .components.config_manager import create_config_manager
 from .components.main_db import connect_main_db, disconnect_main_db
 from .components.main_email_sender import create_main_email_sender
+from .components.user_token_manager import start_user_token_manager
 # from .components.main_tg_bot import start_main_tg_bot, stop_main_tg_bot
-# from .components.jwt_manager import start_jwt_manager
 
 class AppLifecycle:
     def get_lifespan(self):
@@ -25,7 +25,7 @@ class AppLifecycle:
         create_config_manager()
         await connect_main_db()
         create_main_email_sender()
-        # await start_jwt_manager()
+        start_user_token_manager()
         # await start_main_tg_bot()
         # await initialize_electronik()
 

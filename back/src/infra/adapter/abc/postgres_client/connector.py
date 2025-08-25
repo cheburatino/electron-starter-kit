@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 
 
 class Connector(ABC):

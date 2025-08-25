@@ -1,7 +1,7 @@
 from core.config_manager.config_manager import ConfigManager, Utils as ConfigManagerUtils
 from infra.tool.postgres_client.postgres_client import PostgresClient
 from infra.adapter.postgres_client_asyncpg.postgres_client_asyncpg import PostgresClientAsyncpg
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 
 
 def _create_main_db_client() -> PostgresClient:

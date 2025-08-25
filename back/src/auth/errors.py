@@ -59,3 +59,8 @@ class ProviderPermanentError(DomainError):
 class InternalError(DomainError):
     error_code = "INTERNAL_ERROR"
     http_status = 500
+
+
+class EmailSendingError(DomainError):
+    error_code = "EMAIL_SENDING_ERROR"
+    http_status = 500

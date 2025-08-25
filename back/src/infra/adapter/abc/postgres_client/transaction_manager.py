@@ -11,5 +11,9 @@ class TransactionManager(ABC):
 
     @abstractmethod
     @asynccontextmanager
-    async def begin_transaction(self) -> AsyncIterator:
-        yield None 
+    async def tx_context_manager(self) -> AsyncIterator:
+        yield None
+
+    @abstractmethod
+    async def begin(self):
+        pass 

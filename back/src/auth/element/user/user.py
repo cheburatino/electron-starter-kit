@@ -12,25 +12,12 @@ class User(AuthElement):
     has_access: bool = False
     
     @classmethod
-    async def get_by_email(cls, email: str, db_client: PostgresClient = None, repository: UserRepository = None):
+    async def get_by_auth_email(cls, email: str, tx=None, db_client: PostgresClient = None, repository: UserRepository = None):
         actual_client = db_client or cls._get_db_client()
         actual_repo = repository or cls._get_repository()
         
-        async with actual_client.transaction_manager.transaction():
-            data = await actual_repo.get_by_auth_email(email)
-            if data:
-                instance = cls(str(data['id']), actual_client, actual_repo)
-                instance._populate_from_data(data)
-                return instance
-            return None
-    
-    @classmethod
-    async def get_by_telegram_id(cls, telegram_id: str, db_client: PostgresClient = None, repository: UserRepository = None):
-        actual_client = db_client or cls._get_db_client()
-        actual_repo = repository or cls._get_repository()
-        
-        async with actual_client.transaction_manager.transaction():
-            data = await actual_repo.get_by_auth_telegram_id(telegram_id)
+        async with cls._ensure_transaction(tx, actual_client) as transaction:
+            data = await actual_repo.get_by_auth_email(email, tx=transaction)
             if data:
                 instance = cls(str(data['id']), actual_client, actual_repo)
                 instance._populate_from_data(data)

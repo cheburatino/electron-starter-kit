@@ -729,55 +729,55 @@ CREATE TABLE public.ctlg_user_auth_reason (
 );
 
 
-ALTER TABLE public.ctlg_user_auth_confirm_code_reason OWNER TO postgres;
+ALTER TABLE public.ctlg_user_auth_reason OWNER TO postgres;
 
 --
 -- Name: TABLE ctlg_user_auth_reason; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON TABLE public.ctlg_user_auth_confirm_code_reason IS 'Справочник причин аутентификации пользователей';
+COMMENT ON TABLE public.ctlg_user_auth_reason IS 'Справочник причин аутентификации пользователей';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.id; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.id IS 'Уникальный идентификатор записи';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.id IS 'Уникальный идентификатор записи';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.title; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.title IS 'Наименование причины аутентификации';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.title IS 'Наименование причины аутентификации';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.code; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.code IS 'Уникальный код причины аутентификации';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.code IS 'Уникальный код причины аутентификации';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.created_at; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.created_at IS 'Дата и время создания записи';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.created_at IS 'Дата и время создания записи';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.updated_at; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.updated_at IS 'Дата и время последнего обновления записи';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.updated_at IS 'Дата и время последнего обновления записи';
 
 
 --
 -- Name: COLUMN ctlg_user_auth_reason.deleted_at; Type: COMMENT; Schema: public; Owner: postgres
 --
 
-COMMENT ON COLUMN public.ctlg_user_auth_confirm_code_reason.deleted_at IS 'Дата и время удаления записи (soft delete)';
+COMMENT ON COLUMN public.ctlg_user_auth_reason.deleted_at IS 'Дата и время удаления записи (soft delete)';
 
 
 --
@@ -799,7 +799,7 @@ ALTER TABLE public.ctlg_person_auth_reason_id_seq OWNER TO postgres;
 -- Name: ctlg_person_auth_reason_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
-ALTER SEQUENCE public.ctlg_person_auth_reason_id_seq OWNED BY public.ctlg_user_auth_confirm_code_reason.id;
+ALTER SEQUENCE public.ctlg_person_auth_reason_id_seq OWNED BY public.ctlg_user_auth_reason.id;
 
 
 --
@@ -1790,7 +1790,7 @@ ALTER TABLE ONLY public.ctlg_user_auth_comm_channel ALTER COLUMN id SET DEFAULT 
 -- Name: ctlg_user_auth_reason id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.ctlg_user_auth_confirm_code_reason ALTER COLUMN id SET DEFAULT nextval('public.ctlg_person_auth_reason_id_seq'::regclass);
+ALTER TABLE ONLY public.ctlg_user_auth_reason ALTER COLUMN id SET DEFAULT nextval('public.ctlg_person_auth_reason_id_seq'::regclass);
 
 
 --
@@ -1921,7 +1921,7 @@ COPY public.ctlg_user_auth_comm_channel (id, title, code, created_at, updated_at
 -- Data for Name: ctlg_user_auth_reason; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.ctlg_user_auth_confirm_code_reason (id, title, code, created_at, updated_at, deleted_at) FROM stdin;
+COPY public.ctlg_user_auth_reason (id, title, code, created_at, updated_at, deleted_at) FROM stdin;
 \.
 
 
@@ -2219,7 +2219,7 @@ ALTER TABLE ONLY public.ctlg_participant_type
 -- Name: ctlg_user_auth_reason ctlg_person_auth_reason_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
-ALTER TABLE ONLY public.ctlg_user_auth_confirm_code_reason
+ALTER TABLE ONLY public.ctlg_user_auth_reason
     ADD CONSTRAINT ctlg_person_auth_reason_pkey PRIMARY KEY (id);
 
 
@@ -2369,7 +2369,7 @@ CREATE UNIQUE INDEX ctlg_user_auth_comm_channel_code_idx ON public.ctlg_user_aut
 -- Name: ctlg_user_auth_reason_code_idx; Type: INDEX; Schema: public; Owner: postgres
 --
 
-CREATE UNIQUE INDEX ctlg_user_auth_reason_code_idx ON public.ctlg_user_auth_confirm_code_reason USING btree (code) WHERE (deleted_at IS NULL);
+CREATE UNIQUE INDEX ctlg_user_auth_reason_code_idx ON public.ctlg_user_auth_reason USING btree (code) WHERE (deleted_at IS NULL);
 
 
 --
@@ -2537,7 +2537,7 @@ CREATE TRIGGER trigger_update_person_updated_at BEFORE UPDATE ON public.person F
 -- Name: ctlg_user_auth_reason update_ctlg_person_auth_reason_updated_at; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
-CREATE TRIGGER update_ctlg_person_auth_reason_updated_at BEFORE UPDATE ON public.ctlg_user_auth_confirm_code_reason FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_ctlg_person_auth_reason_updated_at BEFORE UPDATE ON public.ctlg_user_auth_reason FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 
 --
@@ -2644,7 +2644,7 @@ ALTER TABLE ONLY public.user_auth_confirm_code
 --
 
 ALTER TABLE ONLY public.user_auth_confirm_code
-    ADD CONSTRAINT person_auth_reason_id_fkey FOREIGN KEY (reason_id) REFERENCES public.ctlg_user_auth_confirm_code_reason(id);
+    ADD CONSTRAINT person_auth_reason_id_fkey FOREIGN KEY (reason_id) REFERENCES public.ctlg_user_auth_reason(id);
 
 
 --

@@ -1,5 +1,5 @@
 from infra.abc.infra_element import InfraElement
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 from infra.adapter.abc.postgres_client.adapter import PostgresClient as AbstractPostgresClient
 from .connector import Connector
 from .executor import Executor

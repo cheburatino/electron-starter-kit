@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
-from infra.tool.email_sender.tool import EmailSender, Utils as EmailSenderUtils
+from back.src.infra.tool.email_sender.email_sender import EmailSender, Utils as EmailSenderUtils
 
 router = APIRouter(prefix="/dev/email", tags=["dev", "email"])
 

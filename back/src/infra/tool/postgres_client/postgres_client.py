@@ -1,5 +1,5 @@
 from infra.abc.infra_element import InfraElement
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 from infra.adapter.abc.postgres_client.adapter import PostgresClient as AbstractPostgresClientAdapter
 
 from .connector import Connector
@@ -17,7 +17,7 @@ class PostgresClient(InfraElement):
             raise ValueError("client_adapter не может быть None")
         self._client_adapter = client_adapter
         self._connector = self.Connector(self._client_adapter)
-        self._transaction_manager = self.TransactionManager(self._client_adapter, main_client=self)
+        self._transaction_manager = self.TransactionManager(self._client_adapter)
         self._query_executor = self.QueryExecutor(self._client_adapter)
 
     @property

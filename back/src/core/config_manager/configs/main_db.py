@@ -1,5 +1,5 @@
 import os
-from infra.system.postgresql.system import PostgresConnectionConfig
+from infra.system.postgresql.postgresql import PostgresConnectionConfig
 
 
 def _from_env() -> PostgresConnectionConfig:

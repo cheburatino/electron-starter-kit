@@ -1,15 +1,32 @@
 import traceback
 from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
 
-from core.utils.object_utils import ObjectUtils
+from infra.abc.infra_element import InfraElement
 from infra.adapter.abc.email_sender.adapter import EmailSender
 from infra.system.email.system import SmtpConnectionConfig
 
 
-class EmailSenderFastapiMail(EmailSender):
-    def __init__(self, fastapi_mail_connection_config: ConnectionConfig):
-        self._fastmail = FastMail(fastapi_mail_connection_config)
+class EmailSenderFastapiMail(InfraElement, EmailSender):
+    def __init__(self, connection_config: SmtpConnectionConfig):
+        self._connection_config = connection_config
+        cfg = ConnectionConfig(
+            MAIL_USERNAME=connection_config.username,
+            MAIL_PASSWORD=connection_config.password,
+            MAIL_FROM=connection_config.from_email,
+            MAIL_FROM_NAME=connection_config.from_name,
+            MAIL_SERVER=connection_config.server,
+            MAIL_PORT=connection_config.port,
+            MAIL_STARTTLS=connection_config.starttls,
+            MAIL_SSL_TLS=connection_config.ssl_tls,
+            USE_CREDENTIALS=connection_config.use_credentials,
+            VALIDATE_CERTS=connection_config.validate_certs,
+        )
+        self._fastmail = FastMail(cfg)
         
+    @property
+    def connection_config(self) -> SmtpConnectionConfig:
+        return self._connection_config
+    
     async def send_email(self, to: list[str], subject: str, body: str) -> bool:
         try:
             message = MessageSchema(
@@ -42,20 +59,5 @@ class EmailSenderFastapiMail(EmailSender):
             print(traceback.format_exc())
             return False
 
-
-class Utils(ObjectUtils):
-    @classmethod
-    def _create(cls, connection_config: SmtpConnectionConfig) -> EmailSenderFastapiMail:
-        fastapi_mail_connection_config = ConnectionConfig(
-            MAIL_USERNAME=connection_config.username,
-            MAIL_PASSWORD=connection_config.password,
-            MAIL_FROM=connection_config.from_email,
-            MAIL_FROM_NAME=connection_config.from_name,
-            MAIL_SERVER=connection_config.server,
-            MAIL_PORT=connection_config.port,
-            MAIL_STARTTLS=connection_config.starttls,
-            MAIL_SSL_TLS=connection_config.ssl_tls,
-            USE_CREDENTIALS=connection_config.use_credentials,
-            VALIDATE_CERTS=connection_config.validate_certs
-        )
-        return EmailSenderFastapiMail(fastapi_mail_connection_config=fastapi_mail_connection_config)
+def get_main_email_sender_adapter() -> EmailSenderFastapiMail:
+    return EmailSenderFastapiMail.get_from_container("main_email_sender_adapter")

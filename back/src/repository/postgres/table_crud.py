@@ -1,4 +1,4 @@
-from infra.tool.postgres_client.query_executor import Query, query_factory
+from infra.tool.postgres_client.query_executor import Query
 from infra.tool.postgres_client.postgres_client import PostgresClient
 from .repository import Repository
 
@@ -8,7 +8,7 @@ class TableCrud(Repository):
         self.client = client
         self.table_name = table_name
     
-    async def get_by_id(self, id: int, res_columns: list = None) -> dict | None:
+    async def get_by_id(self, id: int, res_columns: list = None, tx=None) -> dict | None:
         if not id or id <= 0:
             raise ValueError(f"Для получения записи из {self.table_name} необходим валидный id (положительное число)")
             
@@ -17,8 +17,8 @@ class TableCrud(Repository):
             select_clause = ", ".join(res_columns)
             
         sql = f"SELECT {select_clause} FROM {self.table_name} WHERE id = $1"
-        query: Query = query_factory(sql, [id], fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=[id], fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         return result[0] if result else None
     
     async def get_list(
@@ -28,7 +28,8 @@ class TableCrud(Repository):
             res_columns: list | str | None = None,
             orderby: dict | None = None,
             page_count: int | None = None,
-            page_number: int | None = None
+            page_number: int | None = None,
+            tx=None
             ) -> list[dict] | int:
         filters = filters or []
         
@@ -131,36 +132,36 @@ class TableCrud(Repository):
             
             sql += f" LIMIT {page_count} OFFSET {offset}"
         
-        query: Query = query_factory(sql, params, fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=params, fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         
         if is_count_query and result:
             return result[0]['count']
         
         return result
         
-    async def get_count(self, filters: list = None, include_deleted: bool = False, field_name: str = '*') -> int:
-        return await self.list(filters, include_deleted, field_name)
+    async def get_count(self, filters: list = None, include_deleted: bool = False, field_name: str = '*', tx=None) -> int:
+        return await self.get_list(filters, include_deleted, field_name, tx=tx)
     
-    async def create(self, data: dict, res_columns: list = None) -> dict | None:
+    async def create(self, data: dict, res_columns: list = None, tx=None) -> dict | None:
         returning_clause = "*"
         if isinstance(res_columns, list) and res_columns:
             returning_clause = ", ".join(res_columns)
         
         if not data:
             sql = f"INSERT INTO {self.table_name} DEFAULT VALUES RETURNING {returning_clause}"
-            query: Query = query_factory(sql, [], fetch=True)
+            query = Query(query=sql, params=[], fetch=True)
         else:
             columns = ", ".join(data.keys())
             placeholders = ", ".join([f"${i+1}" for i in range(len(data))])
             values = list(data.values())
             sql = f"INSERT INTO {self.table_name} ({columns}) VALUES ({placeholders}) RETURNING {returning_clause}"
-            query: Query = query_factory(sql, values, fetch=True)
+            query = Query(query=sql, params=values, fetch=True)
         
-        result = await self.client.query_executor.execute_query(query)
+        result = await self.client.query_executor.execute_query(query, tx)
         return result[0] if result else None
     
-    async def update(self, id: int, data: dict, res_columns: list = None) -> dict | None:
+    async def update(self, id: int, data: dict, res_columns: list = None, tx=None) -> dict | None:
         if not id or id <= 0:
             raise ValueError(f"Для обновления записи в {self.table_name} необходим валидный id (положительное число)")
             
@@ -184,12 +185,12 @@ class TableCrud(Repository):
             returning_clause = ", ".join(res_columns)
         
         sql = f"UPDATE {self.table_name} SET {set_clause} WHERE id = ${param_idx} RETURNING {returning_clause}"
-        query: Query = query_factory(sql, params, fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=params, fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         
         return result[0] if result else None
     
-    async def hard_delete(self, id: int, res_columns: list = None) -> dict | None:
+    async def hard_delete(self, id: int, res_columns: list = None, tx=None) -> dict | None:
         if not id or id <= 0:
             raise ValueError(f"Для удаления записи из {self.table_name} необходим валидный id (положительное число)")
             
@@ -198,21 +199,21 @@ class TableCrud(Repository):
             returning_clause = ", ".join(res_columns)
             
         sql = f"DELETE FROM {self.table_name} WHERE id = $1 RETURNING {returning_clause}"
-        query: Query = query_factory(sql, [id], fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=[id], fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         return result[0] if result else None
 
-    async def get_id_by_code(self, code: str) -> int | None:
+    async def get_id_by_code(self, code: str, tx=None) -> int | None:
         sql = f"SELECT id FROM {self.table_name} WHERE deleted_at IS NULL AND lower(code) = lower($1) LIMIT 1"
-        query: Query = query_factory(sql, [code], fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=[code], fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         return result[0]["id"] if result else None
 
-    async def soft_delete(self, id: int) -> dict | None:
+    async def soft_delete(self, id: int, tx=None) -> dict | None:
         if not id or id <= 0:
             raise ValueError(f"Для удаления записи из {self.table_name} необходим валидный id (положительное число)")
         sql = f"UPDATE {self.table_name} SET deleted_at = now() WHERE id = $1 RETURNING *"
-        query: Query = query_factory(sql, [id], fetch=True)
-        result = await self.client.query_executor.execute_query(query)
+        query = Query(query=sql, params=[id], fetch=True)
+        result = await self.client.query_executor.execute_query(query, tx)
         return result[0] if result else None
     

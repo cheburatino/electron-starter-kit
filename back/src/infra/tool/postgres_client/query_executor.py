@@ -23,7 +23,7 @@ class QueryExecutor:
             raise ValueError("Адаптер клиента (client_adapter) не может быть None")
         self._client_adapter = client_adapter
 
-    async def execute_query(self, query_obj: Query, previous_result=None):
+    async def execute_query(self, query_obj: Query, tx=None, previous_result=None):
         if not isinstance(query_obj, Query):
             raise TypeError("Ожидается объект Query")
 
@@ -41,8 +41,17 @@ class QueryExecutor:
             raise TypeError(f"Параметры должны быть list/tuple, получено {type(current_params)} для '{query_obj.query[:50]}...'")
 
         try:
-            # Используем переданное транзакционное соединение если оно есть
-            if hasattr(self, '_conn') and self._conn is not None:
+            # Приоритет: параметр tx > внутреннее _conn > новое соединение
+            if tx:
+                # Используем соединение из транзакции (основной случай для транзакций)
+                result = await self._client_adapter.executor.execute_raw_sql(
+                    conn=tx.connection, 
+                    sql_query=query_obj.query, 
+                    params=current_params, 
+                    fetch=query_obj.fetch
+                )
+            elif hasattr(self, '_conn') and self._conn is not None:
+                # Используем внутреннее соединение (обратная совместимость)
                 result = await self._client_adapter.executor.execute_raw_sql(
                     conn=self._conn, 
                     sql_query=query_obj.query, 
@@ -50,7 +59,7 @@ class QueryExecutor:
                     fetch=query_obj.fetch
                 )
             else:
-                # Выполняем запрос без транзакции - PostgreSQL сам сделает auto-commit
+                # Создаем новое соединение (auto-commit)
                 async with self._client_adapter.connector.pool.acquire() as conn:
                     result = await self._client_adapter.executor.execute_raw_sql(
                         conn=conn, 
